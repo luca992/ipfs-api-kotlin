@@ -11,6 +11,7 @@ pluginManagement {
         kotlin("jvm") version "1.6.21"
         kotlin("plugin.serialization") version "1.6.21"
         id("com.github.ben-manes.versions") version "0.42.0"
+        id("com.vanniktech.maven.publish") version "0.19.0"
     }
 }
 

@@ -3,11 +3,11 @@ plugins {
     kotlin("plugin.serialization")
     id("jacoco")
     id("com.github.ben-manes.versions")
-    id("maven-publish")
+    id("com.vanniktech.maven.publish")
 }
 
-group = "com.github.ligi"
-version = "0.16"
+group = project.property("GROUP") as String
+version = project.property("VERSION_NAME") as String
 
 
 repositories {
@@ -106,5 +106,13 @@ kotlin {
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions {
         jvmTarget = "11"
+    }
+}
+
+plugins.withId("com.vanniktech.maven.publish.base") {
+    configure<com.vanniktech.maven.publish.MavenPublishBaseExtension> {
+        publishToMavenCentral(com.vanniktech.maven.publish.SonatypeHost.S01)
+        signAllPublications()
+        pomFromGradleProperties()
     }
 }
