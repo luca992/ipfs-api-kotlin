@@ -1,30 +1,28 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
-    kotlin("multiplatform")
-    kotlin("plugin.serialization")
+    alias(libs.plugins.org.jetbrains.kotlin.multiplatform)
+    alias(libs.plugins.org.jetbrains.kotlin.plugin.serialization)
+    alias(libs.plugins.com.vanniktech.maven.publish)
     id("jacoco")
-    id("com.github.ben-manes.versions")
-    id("com.vanniktech.maven.publish")
 }
 
 group = project.property("GROUP") as String
 version = project.property("VERSION_NAME") as String
-
-
-repositories {
-    mavenCentral()
-}
 
 kotlin {
     val darwinTargets = arrayOf(
         "macosX64", "macosArm64",
         "iosArm64", "iosX64", "iosSimulatorArm64",
         "tvosArm64", "tvosX64", "tvosSimulatorArm64",
-        "watchosArm32", "watchosArm64", "watchosX86", "watchosX64", "watchosSimulatorArm64",
+        "watchosArm32", "watchosArm64", "watchosX64", "watchosSimulatorArm64", //"watchosDeviceArm64"
     )
-    val linuxTargets = arrayOf("linuxX64", /*"linuxArm64"*/)
+    val linuxTargets = arrayOf("linuxX64"/*, "linuxArm64" https://youtrack.jetbrains.com/issue/KTOR-6173/ */)
     val mingwTargets = arrayOf("mingwX64")
     val nativeTargets = linuxTargets + darwinTargets + mingwTargets
 
+    jvmToolchain(8)
     jvm {
         compilations.all {
             kotlinOptions.jvmTarget = "11"
@@ -39,42 +37,42 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:${Versions.serialization}")
-                api("io.ktor:ktor-client-core:${Versions.ktor}")
-                implementation("io.ktor:ktor-client-content-negotiation:${Versions.ktor}")
-                implementation("io.ktor:ktor-serialization-kotlinx-json:${Versions.ktor}")
-                api("com.squareup.okio:okio:${Versions.okio}")
+                implementation(libs.kotlinx.coroutines.core)
+                implementation(libs.kotlinx.serialization.json)
+                api(libs.ktor.client.core)
+                implementation(libs.ktor.client.content.negotiation)
+                implementation(libs.ktor.serialization.kotlinx.json)
+                api(libs.okio)
             }
         }
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:${Versions.coroutines}")
+                implementation(libs.kotlinx.coroutines.test)
             }
         }
 
         val jvmMain by getting {
             dependsOn(commonMain)
             dependencies {
-                implementation("io.ktor:ktor-client-okhttp:${Versions.ktor}")
+                implementation(libs.ktor.client.okhttp)
             }
         }
 
         val jsMain by getting {
             dependsOn(commonMain)
             dependencies {
-                implementation("io.ktor:ktor-client-js:${Versions.ktor}")
-                implementation("com.squareup.okio:okio-nodefilesystem:${Versions.okio}")
+                implementation(libs.ktor.client.js)
+                implementation(libs.okio.nodefilesystem)
             }
         }
 
 
         val jvmTest by getting {
             dependencies {
-                implementation("org.mockito:mockito-core:4.5.1")
-                implementation("com.squareup.okhttp3:mockwebserver:${Versions.okhttp}")
-                implementation("org.assertj:assertj-core:3.22.0")
+                implementation(libs.mockito.core)
+                implementation(libs.mockwebserver)
+                implementation(libs.assertj.core)
             }
         }
         val nativeMain by creating {
@@ -84,7 +82,7 @@ kotlin {
         val darwinMain by creating {
             dependsOn(nativeMain)
             dependencies {
-                implementation("io.ktor:ktor-client-darwin:${Versions.ktor}")
+                implementation(libs.ktor.client.darwin)
             }
         }
         darwinTargets.forEach { target ->
@@ -95,7 +93,7 @@ kotlin {
         val linuxAndMingwMain by creating {
             dependsOn(nativeMain)
             dependencies {
-                implementation("io.ktor:ktor-client-curl:${Versions.ktor}")
+                implementation(libs.ktor.client.curl)
             }
         }
         (mingwTargets + linuxTargets).forEach { target ->
@@ -107,16 +105,13 @@ kotlin {
     }
 }
 
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-    kotlinOptions {
-        jvmTarget = "11"
-    }
+tasks.withType<KotlinCompile> {
+    compilerOptions.jvmTarget = JvmTarget.JVM_1_8
 }
 
-plugins.withId("com.vanniktech.maven.publish.base") {
+plugins.withId("com.vanniktech.maven.publish") {
     configure<com.vanniktech.maven.publish.MavenPublishBaseExtension> {
         publishToMavenCentral(com.vanniktech.maven.publish.SonatypeHost.S01)
         signAllPublications()
-        pomFromGradleProperties()
     }
 }
