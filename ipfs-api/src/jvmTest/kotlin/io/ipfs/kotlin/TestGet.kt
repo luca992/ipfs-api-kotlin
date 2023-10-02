@@ -19,7 +19,7 @@ class TestGet : BaseIPFSWebserverTest() {
         assertThat(result).isEqualTo("result")
 
         val executedRequest = server.takeRequest()
-        assertThat(executedRequest.path).startsWith("/cat/hash")
+        assertThat(executedRequest.path).startsWith("/cat?arg=hash")
 
     }
 
